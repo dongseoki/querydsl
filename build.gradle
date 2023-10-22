@@ -2,7 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.1.5'
 	id 'io.spring.dependency-management' version '1.1.3'
-//	id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
+	id "com.ewerk.gradle.plugins.querydsl" version "1.0.10"
 }
 
 group = 'study'
@@ -43,16 +43,54 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+//외부 블로그
+//def querydslDir = "$buildDir/generated/querydsl"
+//
+//sourceSets {
+//	main.java.srcDirs += [ querydslDir ]
+//}
+//
+//tasks.withType(JavaCompile) {
+//	options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+//}
+//
+//clean.doLast {
+//	file(querydslDir).deleteDir()
+//}
+
+
+// 김영한
+//querydsl {
+//	jpa = true
+//	querydslSourcesDir = querydslDir
+//	library = "com.querydsl:querydsl-apt"
+//}
+//sourceSets {
+//	main.java.srcDir querydslDir
+//}
+//configurations {
+//	querydsl.extendsFrom compileClasspath
+//}
+//compileQuerydsl {
+//	options.annotationProcessorPath = configurations.querydsl
+//}
+//querydsl 추가 끝
+
+
+// https://wjjeong.tistory.com/59
+// querydsl 추가
 def querydslDir = "$buildDir/generated/querydsl"
 
+querydsl {
+	jpa = true
+	querydslSourcesDir = querydslDir
+}
 sourceSets {
-	main.java.srcDirs += [ querydslDir ]
+	main.java.srcDir querydslDir
 }
-
-tasks.withType(JavaCompile) {
-	options.annotationProcessorGeneratedSourcesDirectory = file(querydslDir)
+configurations {
+	querydsl.extendsFrom compileClasspath
 }
-
-clean.doLast {
-	file(querydslDir).deleteDir()
+compileQuerydsl {
+	options.annotationProcessorPath = configurations.querydsl
 }
