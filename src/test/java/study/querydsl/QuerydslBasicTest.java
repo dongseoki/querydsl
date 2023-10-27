@@ -166,12 +166,21 @@ public class QuerydslBasicTest {
         .orderBy(member.age.asc(), member.username.asc().nullsLast())
         .fetch();
 
-//    Member member5 = result.get(0);
-//    Member member6 = result.get(1);
-//    Member memberNull = result.get(2);
-//
-//    assertThat(member5.getUsername()).isEqualTo("member5");
-//    assertThat(member6.getUsername()).isEqualTo("member6");
-//    assertThat(memberNull.getUsername()).isNull();
+    Member member5 = result.get(0);
+    Member member6 = result.get(1);
+    Member memberNull = result.get(2);
+
+    assertThat(member5.getUsername()).isEqualTo("member5");
+    assertThat(member6.getUsername()).isEqualTo("member6");
+    assertThat(memberNull.getUsername()).isNull();
+  }
+
+  @Test
+  void paging1() {
+    List<Member> result = query.selectFrom(member).orderBy(member.username.desc())
+                                .offset(1)
+                                .limit(2)
+                                .fetch();
+    assertThat(result.size()).isEqualTo(2);
   }
 }
