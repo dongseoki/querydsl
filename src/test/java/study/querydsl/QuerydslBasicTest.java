@@ -1,5 +1,6 @@
 package study.querydsl;
 
+import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -100,5 +101,49 @@ public class QuerydslBasicTest {
 
     assertThat(findMember.getUsername()).isEqualTo("member1");
     assertThat(findMember.getAge()).isEqualTo(10);
+  }
+
+  @Test
+  void resultFetch() {
+
+    //List  리스트 조회, 데이터 없으면 빈 리스트 반환
+    List<Member> fetch = query
+        .selectFrom(member)
+        .fetch();
+
+    //단 건 JPQL에서 .getSingleResult 랑 같다.
+    //결과가 없으면 : null
+    //결과가 둘 이상이면 : com.querydsl.core.NonUniqueResultException
+//    Member fetchOne = query
+//        .selectFrom(member)
+//        .fetchOne();
+
+    //처음 한 건 조회
+    Member fetchFirst = query
+        .selectFrom(member)
+        .fetchFirst();
+
+    //페이징에서 사용. 페이징 정보 포함, total count 쿼리 추가 실행
+//    QueryResults<Member> results = query
+//        .selectFrom(member)
+//        .fetchResults();
+//    results.getTotal();
+//    List<Member> content = results.getResults();
+
+
+    List<Member> results = query
+        .selectFrom(member)
+        .fetch();
+
+    results.size();
+
+    // 카운트 쿼리로 변경
+//    long resultCount = query
+//        .selectFrom(member)
+//        .fetchCount();
+
+//    long resultCount = query
+//        .selectFrom(member)
+//        .fetchCount();
   }
 }
