@@ -4,7 +4,9 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceUnit;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -329,5 +331,41 @@ public class QuerydslBasicTest {
     //주의! 문법을 잘 봐야 한다. leftJoin() 부분에 일반 조인과 다르게 엔티티 하나만 들어간다.
     //일반조인: leftJoin(member.team, team)
     //on조인: from(member).leftJoin(team).on(xxx)
+  }
+
+  @PersistenceUnit
+  EntityManagerFactory emf;
+
+  @Test
+  void fetchJoinNo() {
+    em.flush();
+    em.clear();
+
+    Member findMember = query
+        .selectFrom(member)
+        .where(member.username.eq("member1"))
+        .fetchOne();
+
+    boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+    assertThat(loaded).isFalse();
+    String name = findMember.getTeam().getName();
+    System.out.println("name = " + name);
+  }
+
+  @Test
+  void fetchJoin() {
+    em.flush();
+    em.clear();
+
+    Member findMember = query
+        .selectFrom(member)
+        .join(member.team, team).fetchJoin()
+        .where(member.username.eq("member1"))
+        .fetchOne();
+
+    boolean loaded = emf.getPersistenceUnitUtil().isLoaded(findMember.getTeam());
+
+    assertThat(loaded).isTrue();
   }
 }
