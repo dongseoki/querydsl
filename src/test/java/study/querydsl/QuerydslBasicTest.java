@@ -674,5 +674,12 @@ public class QuerydslBasicTest {
     }
 
     //잘 안쓰는 이유는 dto가 queryDsl을 의존하게 되서 단점이다.
+
+
+//    List<String> result = queryFactory
+//        .select(member.username).distinct()
+//        .from(member)
+//        .fetch();
+//    distinct 쓰는 법.
   }
 }
