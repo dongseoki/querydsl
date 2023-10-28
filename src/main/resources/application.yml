@@ -18,7 +18,12 @@ spring:
 
 logging.level:
   org.hibernate.SQL: debug
-#  org.hibernate.type: trace
+#  org.hibernate.orm.jdbc.bind: trace
 
 p6spy:
   detail: false
+
+decorator:
+  datasource:
+    p6spy:
+      enable-logging: true
