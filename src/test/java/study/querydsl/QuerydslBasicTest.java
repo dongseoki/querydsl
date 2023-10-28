@@ -282,4 +282,52 @@ public class QuerydslBasicTest {
 
     //outer join이 되지 않는다.
   }
+
+  /**
+   * 예) 회원과 팀을 조인하면서, 팀 이름이 teamA인 팀만 조인, 회원은 모두 조회
+   */
+  @Test
+  void join_on_filtering() {
+    List<Tuple> result = query
+        .select(member, team)
+        .from(member)
+        .leftJoin(member.team, team)
+        .on(team.name.eq("teamA"))
+        .fetch();
+
+    //> 참고: on 절을 활용해 조인 대상을 필터링 할 때, 외부조인이 아니라 내부조인(inner join)을 사용하면,
+    //where 절에서 필터링 하는 것과 기능이 동일하다. 따라서 on 절을 활용한 조인 대상 필터링을 사용할 때,
+    //내부조인 이면 익숙한 where 절로 해결하고, 정말 외부조인이 필요한 경우에만 이 기능을 사용하자
+
+    for (Tuple tuple : result) {
+      System.out.println("tuple = " + tuple);
+    }
+  }
+
+  /**
+   * 연관 관계가 없는 외부 조인 (outer)
+   * 회원의 이름이 팀 이름과 같은 대상 외부 조인
+   */
+  @Test
+  void join_on_no_relation() {
+    em.persist(new Member("teamA"));
+    em.persist(new Member("teamB"));
+    em.persist(new Member("teamC"));
+
+    List<Tuple> result = query
+        .select(member, team)
+        .from(member)
+        .leftJoin(team)
+        .on(member.username.eq(team.name))
+        .fetch();
+
+    for (Tuple tuple : result) {
+      System.out.println("tuple = " + tuple);
+    }
+
+    //하이버네이트 5.1부터 on 을 사용해서 서로 관계가 없는 필드로 외부 조인하는 기능이 추가되었다. 물론 내부 조인도 가능하다.
+    //주의! 문법을 잘 봐야 한다. leftJoin() 부분에 일반 조인과 다르게 엔티티 하나만 들어간다.
+    //일반조인: leftJoin(member.team, team)
+    //on조인: from(member).leftJoin(team).on(xxx)
+  }
 }
