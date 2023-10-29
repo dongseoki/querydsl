@@ -750,4 +750,55 @@ public class QuerydslBasicTest {
   private BooleanExpression allEq(String usernameCond, Integer ageCond) {
     return usernameEq(usernameCond).and(ageEq(ageCond));
   }
+
+
+  @Test
+  void bulkUpdate() {
+
+    //member1 = DB: member1, 영속성컨텍스트: member1
+    //member2 = DB: member2, 영속성컨텍스트: member2
+
+    long count = query
+        .update(member)
+        .set(member.username, "비회원")
+        .where(member.age.lt(28))
+        .execute();
+
+    //member1 = DB: 비회원, 영속성컨텍스트: member1
+    //member2 = DB: 비회원, 영속성컨텍스트: member2
+
+    //벌크 연산은 영속성컨텍스트를 초기화 해주어야한다.
+    em.flush();
+    em.clear();
+
+    List<Member> result = query
+        .selectFrom(member)
+        .where(member.username.eq("비회원"))
+        .orderBy(member.username.desc())
+        .fetch();
+
+    assertThat(result.get(0).getUsername()).isEqualTo("비회원");
+    assertThat(result.size()).isEqualTo(2);
+
+    for (Member member1 : result) {
+      System.out.println("member1 = " + member1);
+    }
+  }
+
+
+  @Test
+  void bulkAdd() {
+    long count = query
+        .update(member)
+        .set(member.age, member.age.add(1))
+        .execute();
+  }
+
+  @Test
+  void bulkDelete() {
+    long count = query
+        .delete(member)
+        .where(member.age.gt(18))
+        .execute();
+  }
 }
