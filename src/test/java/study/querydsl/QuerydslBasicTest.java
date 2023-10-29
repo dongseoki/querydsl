@@ -801,4 +801,29 @@ public class QuerydslBasicTest {
         .where(member.age.gt(18))
         .execute();
   }
+
+  @Test
+  void sqlFunction() {
+    List<String> result = query
+        .select(Expressions.stringTemplate("function('replace', {0}, {1}, {2})", member.username, "member", "M"))
+        .from(member)
+        .fetch();
+
+    for (String s : result) {
+      System.out.println("s = " + s);
+    }
+  }
+
+  @Test
+  void sqlFunction2() {
+    List<String> result = query
+//                .select(Expressions.stringTemplate("function('lower',{0})", member.username))
+.select(member.username.lower())
+.from(member)
+.fetch();
+
+    for (String s : result) {
+      System.out.println("s = " + s);
+    }
+  }
 }
