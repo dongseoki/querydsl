@@ -82,7 +82,8 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
   }
 
   @Override
-  public Page<MemberTeamDto> searchPageComplexOld(MemberSearchCondition condition, Pageable pageable) {
+  public Page<MemberTeamDto> searchPageComplexOld(MemberSearchCondition condition,
+                                                  Pageable pageable) {
 
     // content, totalcount 쿼리 분리
 
@@ -118,7 +119,7 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
         )
         .fetchCount();
 
-    return new PageImpl<>(content,pageable, total);
+    return new PageImpl<>(content, pageable, total);
   }
 
   @Override
@@ -168,7 +169,35 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
   }
 
   @Override
-  public Page<MemberTeamDto> searchPageComplexUsingSort(MemberSearchCondition condition, Pageable pageable) {
+  public Page<MemberTeamDto> searchPageComplexQueryDslVer5(MemberSearchCondition condition,
+                                                           Pageable pageable) {
+    List<MemberTeamDto> content = queryFactory
+        .select(new QMemberTeamDto(member.id.as("memberId"), member.username, member.age,
+            team.id.as("teamId"), team.name.as("teamName")))
+        .from(member)
+        .leftJoin(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())
+        )
+        .offset(pageable.getOffset())
+        .limit(pageable.getPageSize())
+        .fetch();
+
+    JPAQuery<Long> countQuery = queryFactory
+        .select(member.count())
+        .from(member)
+        .leftJoin(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()), teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()), ageLoe(condition.getAgeLoe())
+        );
+    return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+  }
+
+  @Override
+  public Page<MemberTeamDto> searchPageComplexUsingSort(MemberSearchCondition condition,
+                                                        Pageable pageable) {
 
     // content, totalcount 쿼리 분리
 
@@ -192,7 +221,9 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     for (Sort.Order o : pageable.getSort()) {
       PathBuilder pathBuilder = new PathBuilder(member.getType(),
           member.getMetadata());
-      searchPageComplexWhereIncludePart.orderBy(new OrderSpecifier(o.isAscending() ? Order.ASC : Order.DESC,             pathBuilder.get(o.getProperty())));
+      searchPageComplexWhereIncludePart.orderBy(
+          new OrderSpecifier(o.isAscending() ? Order.ASC : Order.DESC,
+              pathBuilder.get(o.getProperty())));
     }
 
     List<MemberTeamDto> content = searchPageComplexWhereIncludePart
@@ -224,8 +255,6 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
 //    스프링데이터 페이징이제공하는 Sort 를 사용하기보다는 파라미터를받아서직접 처리하는것을 권장한다.
     return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
   }
-
-
 
 
   private BooleanExpression usernameEq(String username) {
