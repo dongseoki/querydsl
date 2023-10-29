@@ -1,13 +1,17 @@
 package study.querydsl.repository;
 
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.util.StringUtils;
 import study.querydsl.dto.MemberSearchCondition;
@@ -162,6 +166,66 @@ public class MemberRepositoryImpl implements MemberRepositoryCustom {
     //마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈 구함)
     return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
   }
+
+  @Override
+  public Page<MemberTeamDto> searchPageComplexUsingSort(MemberSearchCondition condition, Pageable pageable) {
+
+    // content, totalcount 쿼리 분리
+
+    JPAQuery<MemberTeamDto> searchPageComplexWhereIncludePart = queryFactory
+        .select(new QMemberTeamDto(
+            member.id.as("memberId"),
+            member.username,
+            member.age,
+            team.id.as("teamId"),
+            team.name.as("teamName")
+        ))
+        .from(member)
+        .join(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()),
+            teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()),
+            ageLoe(condition.getAgeLoe())
+        );
+
+    for (Sort.Order o : pageable.getSort()) {
+      PathBuilder pathBuilder = new PathBuilder(member.getType(),
+          member.getMetadata());
+      searchPageComplexWhereIncludePart.orderBy(new OrderSpecifier(o.isAscending() ? Order.ASC : Order.DESC,             pathBuilder.get(o.getProperty())));
+    }
+
+    List<MemberTeamDto> content = searchPageComplexWhereIncludePart
+        .offset(pageable.getOffset())
+        .limit(pageable.getPageSize())
+        .fetch();
+
+    JPAQuery<Member> countQuery = queryFactory
+        .select(member)
+        .from(member)
+        .leftJoin(member.team, team)
+        .where(
+            usernameEq(condition.getUsername()),
+            teamNameEq(condition.getTeamName()),
+            ageGoe(condition.getAgeGoe()),
+            ageLoe(condition.getAgeLoe())
+        );
+
+
+//        return new PageImpl<>(content,pageable, total);
+
+    //스프링 데이터 라이브러리가 제공 (PageableExecutionUtils)
+    //count 쿼리가 생략 가능한 경우 생략해서 처리
+    //페이지 시작이면서 컨텐츠 사이즈가 페이지 사이즈보다 작을 때
+    //마지막 페이지 일 때 (offset + 컨텐츠 사이즈를 더해서 전체 사이즈 구함)
+
+//    참고: 정렬( Sort )은조건이조금만 복잡해져도 Pageable 의 Sort 기능을 사용하기어렵다.
+//    루트엔티티 범위를 넘어가는동적 정렬기능이 필요하면
+//    스프링데이터 페이징이제공하는 Sort 를 사용하기보다는 파라미터를받아서직접 처리하는것을 권장한다.
+    return PageableExecutionUtils.getPage(content, pageable, () -> countQuery.fetchCount());
+  }
+
+
 
 
   private BooleanExpression usernameEq(String username) {

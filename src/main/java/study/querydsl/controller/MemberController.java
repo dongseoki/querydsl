@@ -33,4 +33,9 @@ public class MemberController {
     return memberRepository.searchPageComplex(condition, pageable);
   }
 
+  @GetMapping("/v3-sort/members")
+  public Page<MemberTeamDto> searchMemberV3_usingSort(MemberSearchCondition condition, Pageable pageable) {
+    return memberRepository.searchPageComplexUsingSort(condition, pageable);
+  }
+
 }
